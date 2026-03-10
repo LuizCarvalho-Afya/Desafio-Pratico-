@@ -19,3 +19,5 @@ Desafio Prático: Algoritmos em Grafos — Da Teoria ao Mundo Real
 **Aplicação:** Mapeamos cadeias de evolução Pokémon como grafos dirigidos e pesados. 
 Utilizamos a lógica do **Dijkstra** para calcular o menor "custo de experiência" para 
 alcançar diferentes evoluções a partir de uma base comum.
+
+Alunos: Luiz Gustavo, Marcelo Tenorio, Matheus Cordeiro, Sanelva Sobrinho
