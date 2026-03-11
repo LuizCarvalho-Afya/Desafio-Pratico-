@@ -2,49 +2,88 @@ import requests
 import heapq
 
 def get_pokemon_data(name):
+
     url_species = f"https://pokeapi.co/api/v2/pokemon-species/{name.lower()}"
-    res = requests.get(url_species).json()
+    response = requests.get(url_species)
+
+    if response.status_code != 200:
+        print("Pokémon não encontrado.")
+        return None, None
+
+    res = response.json()
+
     evo_chain_url = res['evolution_chain']['url']
     evo_data = requests.get(evo_chain_url).json()['chain']
-    
+
     edges = []
+
+    # construir grafo de evoluções
     def build_graph(node):
+
         for evo in node['evolves_to']:
+
             u = node['species']['name']
             v = evo['species']['name']
-            # Custo: nível mínimo ou 1 para métodos especiais
-            w = evo['evolution_details'][0].get('min_level') or 1
-            edges.append((u, v, w))
+
+            # nível mínimo da evolução
+            level = evo['evolution_details'][0].get('min_level') or 1
+
+            edges.append((u, v, level))
+
             build_graph(evo)
-            
+
     build_graph(evo_data)
+
     return edges, evo_data['species']['name']
 
+
 def run_dijkstra(edges, start_node):
+
     adj = collections.defaultdict(list)
     nodes = set()
+
     for u, v, w in edges:
         adj[u].append((v, w))
-        nodes.add(u); nodes.add(v)
-    
+        nodes.add(u)
+        nodes.add(v)
+
     pq = [(0, start_node)]
+
     dist = {n: float('inf') for n in nodes}
+    prev = {}
+
     dist[start_node] = 0
-    
+
     while pq:
+
         d, u = heapq.heappop(pq)
-        if d > dist[u]: continue
+
+        if d > dist[u]:
+            continue
+
         for v, w in adj[u]:
+
             if dist[u] + w < dist[v]:
+
                 dist[v] = dist[u] + w
+                prev[v] = u
+
                 heapq.heappush(pq, (dist[v], v))
-    return dist
 
-# Teste Real
-pkm = "eevee" # Tente "bulbasaur" para ver custos diferentes!
-arestas, inicial = get_pokemon_data(pkm)
-resultados = run_dijkstra(arestas, inicial)
+    return dist, prev
 
-print(f"Caminho de Evolução para {pkm.upper()}:")
-for p, d in resultados.items():
-    print(f"-> {p.capitalize()}: Custo acumulado {d}")
+pokemon = input("Digite o nome de um Pokémon: ")
+
+edges, start = get_pokemon_data(pokemon)
+
+if edges:
+
+    dist, prev = run_dijkstra(edges, start)
+
+    print("\nLinha evolutiva:\n")
+
+    for u, v, level in edges:
+
+        path = [u.capitalize(), v.capitalize()]
+
+        print(" → ".join(path), "| nível:", level)
